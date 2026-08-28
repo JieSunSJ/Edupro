@@ -9,14 +9,8 @@ const routes = [
   {
     path: '/',
     component: () => import('../views/layout/LayoutView.vue'),
-    redirect: '/emp',
+    redirect: '/student',
     children: [
-      {
-        path: 'emp',
-        name: 'Emp',
-        component: () => import('../views/emp/EmpView.vue'),
-        meta: { title: '员工管理' }
-      },
       {
         path: 'student',
         name: 'Student',
@@ -42,6 +36,55 @@ const routes = [
         meta: { title: '操作日志' }
       }
     ]
+  },
+  {
+    path: '/stu',
+    component: () => import('../views/student/StudentLayout.vue'),
+    redirect: '/stu/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        name: 'StudentDashboard',
+        component: () => import('../views/student/StudentDashboard.vue'),
+        meta: { title: '学生首页' }
+      },
+      {
+        path: 'course',
+        name: 'StudentCourse',
+        component: () => import('../views/student/StudentCourse.vue'),
+        meta: { title: '选课中心' }
+      },
+      {
+        path: 'course/:id',
+        name: 'StudentCourseDetail',
+        component: () => import('../views/student/StudentCourseDetail.vue'),
+        meta: { title: '课程详情' }
+      },
+      {
+        path: 'schedule',
+        name: 'StudentSchedule',
+        component: () => import('../views/student/StudentSchedule.vue'),
+        meta: { title: '我的课表' }
+      },
+      {
+        path: 'exam',
+        name: 'StudentExam',
+        component: () => import('../views/student/StudentExam.vue'),
+        meta: { title: '考试信息' }
+      },
+      {
+        path: 'violation',
+        name: 'StudentViolation',
+        component: () => import('../views/student/StudentViolation.vue'),
+        meta: { title: '违纪记录' }
+      },
+      {
+        path: 'profile',
+        name: 'StudentProfile',
+        component: () => import('../views/student/StudentProfile.vue'),
+        meta: { title: '个人中心' }
+      }
+    ]
   }
 ]
 
@@ -51,12 +94,27 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  if (to.path !== '/login' && !token) {
-    next('/login')
-  } else {
-    next()
+  if (to.path === '/login') {
+    return next()
   }
+  const token = localStorage.getItem('token')
+  if (!token) {
+    return next('/login')
+  }
+  try {
+    const studentInfo = JSON.parse(localStorage.getItem('studentInfo') || 'null')
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null')
+    if (studentInfo && (to.path === '/' || to.path.startsWith('/student') || to.path.startsWith('/clazz'))) {
+      return next('/stu/dashboard')
+    }
+    if (userInfo && (to.path === '/stu' || to.path.startsWith('/stu/'))) {
+      return next('/student')
+    }
+  } catch (e) {
+    localStorage.clear()
+    return next('/login')
+  }
+  next()
 })
 
 export default router

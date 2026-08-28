@@ -12,6 +12,7 @@
 | JWT (jjwt) | 0.9.1 | 身份认证令牌 |
 | Lombok | 1.18.42 | 简化 Java 代码 |
 | 阿里云 OSS | 3.17.4 | 文件存储服务 |
+| Spring AOP | 2.6.13 | 操作日志自动记录 |
 | Maven | 3.x | 项目构建与依赖管理 |
 
 ## 项目结构（Maven 多模块）
@@ -19,25 +20,23 @@
 ```
 tlias/
 ├── tlias-common/          # 公共模块
-│   ├── entity/            # 实体类 (Emp, Student, Clazz, Dept, LoginInfo 等)
+│   ├── entity/            # 实体类 (User, Student, Clazz, OperateLog 等)
 │   ├── utils/             # 工具类 (JwtUtils, CurrentHolder)
-│   ├── vo/                # 视图对象 (Result, PageResult, JobOption 等)
+│   ├── vo/                # 视图对象 (Result, PageResult 等)
 │   └── annotation/        # 自定义注解 (@LogOperation)
 ├── tlias-mapper/          # 数据持久层
 │   ├── mapper/            # Mapper 接口
 │   └── resources/mapper/  # MyBatis XML 映射文件
 ├── tlias-service/         # 业务逻辑层
 │   ├── service/           # 服务接口
-│   ├── service/impl/      # 服务实现
-│   ├── aspect/            # AOP 切面 (日志记录)
-│   └── listener/          # 事件监听器
+│   └── service/impl/      # 服务实现
 └── tlias-web/             # Web 表现层
     ├── controller/        # REST 控制器
     ├── config/            # 配置类 (OSS, WebConfig)
     ├── filter/            # 过滤器 (TokenFilter)
-    ├── interceptor/       # 拦截器 (TokenInterceptor)
+    ├── interceptor/       # 拦截器 (TokenInterceptor, OperateLogAspect)
     ├── exception/         # 全局异常处理
-    └── resources/         # 配置文件
+    └── resources/         # 配置文件 + schema.sql
 ```
 
 ## 快速启动
@@ -111,7 +110,7 @@ token: <JWT Token>
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/login` | 用户登录 |
+| POST | `/login` | 管理员/教师登录 |
 
 **POST /login**
 
@@ -141,57 +140,14 @@ token: <JWT Token>
 
 ---
 
-### 二、员工管理 `/emp`
+### 二、用户管理 `/user`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/emp/list` | 查询所有员工（支持多条件筛选） |
-| GET | `/emp/page` | 分页查询员工 |
-| GET | `/emp/{id}` | 根据 ID 查询员工 |
-| POST | `/emp` | 添加员工 |
-| PUT | `/emp` | 更新员工 |
-| DELETE | `/emp?ids=1,2,3` | 批量删除员工 |
-| PUT | `/emp/password` | 修改密码 |
-
-**GET /emp/list** | **GET /emp/page**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| name | String | 否 | 姓名（模糊查询） |
-| gender | Integer | 否 | 性别：1-男, 2-女 |
-| job | Integer | 否 | 职位：1-班主任, 2-讲师, 3-学工主管, 4-教研主管 |
-| deptId | Integer | 否 | 部门 ID |
-| salaryMin | BigDecimal | 否 | 最低薪资 |
-| salaryMax | BigDecimal | 否 | 最高薪资 |
-| page | Integer | 否 | 页码（默认 1） |
-| pageSize | Integer | 否 | 每页条数（默认 10） |
-
-**POST /emp** | **PUT /emp**
-
-```json
-{
-  "name": "张三",
-  "username": "zhangsan",
-  "gender": 1,
-  "job": 2,
-  "deptId": 1,
-  "salary": 8000,
-  "image": "https://...",
-  "exprList": [
-    { "company": "某公司", "job": "工程师", "begin": "2020-01-01", "end": "2022-12-31" }
-  ]
-}
-```
-
-**PUT /emp/password**
-
-```json
-{
-  "id": 1,
-  "oldPassword": "123456",
-  "newPassword": "654321"
-}
-```
+| GET | `/user/profile` | 获取当前用户信息 |
+| PUT | `/user/profile` | 更新用户信息 |
+| PUT | `/user/image` | 更新用户头像 |
+| PUT | `/user/password` | 修改密码 |
 
 ---
 
@@ -199,7 +155,7 @@ token: <JWT Token>
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/clazzes` | 分页查询班级 |
+| GET | `/clazzes` | 分页查询班级（含班主任姓名） |
 | GET | `/clazzes/{id}` | 根据 ID 查询班级 |
 | GET | `/clazzes/all` | 查询所有班级 |
 | GET | `/clazzes/all/page` | 分页查询所有班级 |
@@ -241,7 +197,7 @@ token: <JWT Token>
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/students/list` | 分页查询学生 |
+| GET | `/students/list` | 分页查询学生（含班级名+班主任） |
 | GET | `/students/{id}` | 根据 ID 查询学生 |
 | POST | `/students/add` | 添加学生 |
 | PUT | `/students/update` | 更新学生 |
@@ -252,44 +208,23 @@ token: <JWT Token>
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | name | String | 否 | 姓名 |
-| degree | String | 否 | 学历 |
 | clazzId | Integer | 否 | 班级 ID |
 | page | Integer | 是 | 页码 |
 | pageSize | Integer | 是 | 每页条数 |
 
 ---
 
-### 五、数据统计 `/report`
+### 五、操作日志 `/logs`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/report/empJobData` | 各职位员工人数统计 |
-| GET | `/report/empGenderData` | 员工性别分布统计 |
-| GET | `/report/studentGenderData` | 学生性别分布统计 |
-| GET | `/report/studentCollegeData` | 学生学历分布统计 |
-| GET | `/report/studentCountData` | 各班级学生人数统计 |
+| GET | `/logs` | 分页查询操作日志 |
+
+日志由 AOP 切面自动记录，拦截所有 Controller 中的 `add*`、`update*`、`delete*` 方法。
 
 ---
 
-### 六、操作日志 `/logs`
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/logs/list` | 查询所有日志 |
-| GET | `/logs/page` | 分页查询日志 |
-| DELETE | `/logs/{id}` | 删除日志 |
-
----
-
-### 七、部门管理 `/dept`
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/dept/list` | 查询所有部门 |
-
----
-
-### 八、文件上传
+### 六、文件上传
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -299,9 +234,74 @@ token: <JWT Token>
 
 ---
 
+## 数据库表结构
+
+### user 表（管理员/教师）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 |
+| username | VARCHAR | 登录用户名 |
+| password | VARCHAR | 登录密码 |
+| name | VARCHAR | 姓名 |
+| role | INT | 角色：1-管理员, 2-教师 |
+| phone | VARCHAR | 手机号 |
+| gender | INT | 性别：1-男, 2-女 |
+| image | VARCHAR | 头像 URL |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+
+### student 表（学生）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 |
+| name | VARCHAR | 姓名 |
+| no | VARCHAR | 学号 |
+| gender | INT | 性别：1-男, 2-女 |
+| phone | VARCHAR | 手机号 |
+| address | VARCHAR | 地址 |
+| clazz_id | INT | 所属班级 ID |
+| password | VARCHAR | 登录密码 |
+| image | VARCHAR | 头像 URL |
+| violation_count | INT | 违纪次数 |
+| violation_score | INT | 违纪扣分 |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+
+### clazz 表（班级）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 |
+| name | VARCHAR | 班级名称 |
+| room | VARCHAR | 教室 |
+| begin_date | DATE | 开课日期 |
+| end_date | DATE | 结课日期 |
+| subject | INT | 学科码 |
+| master_id | INT | 班主任 ID（关联 user 表） |
+| status | INT | 状态：0-未开课, 1-已开课, 2-已完结 |
+| create_time | DATETIME | 创建时间 |
+| update_time | DATETIME | 更新时间 |
+
+### operate_log 表（操作日志）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 |
+| operate_user | VARCHAR | 操作人 |
+| operate_time | DATETIME | 操作时间 |
+| operate_type | VARCHAR | 操作类型（新增/修改/删除） |
+| operate_detail | VARCHAR | 操作详情 |
+| params | TEXT | 方法参数 |
+| cost_time | BIGINT | 耗时(ms) |
+
+---
+
 ## 角色说明
 
 | 角色 | role 值 | 权限 |
 |------|---------|------|
 | 管理员 | 1 | 全部功能 |
-| 普通用户 | 2 | 受限功能 |
+| 教师 | 2 | 受限功能 |
+| 学生 | student | 学生端功能 |

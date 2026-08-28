@@ -16,4 +16,9 @@ public interface StudentService {
     void deleteById(Integer id);
     void updateStudent(Student student);
     Student getById(Integer id);
+
+    Student login(String no, String password);
+    void updateProfile(Student student);
+    void updatePassword(Integer id, String oldPassword, String newPassword);
+    void updateImage(Integer id, String imageUrl);
 }

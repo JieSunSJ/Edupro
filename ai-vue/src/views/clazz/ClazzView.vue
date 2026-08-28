@@ -27,20 +27,20 @@
       </template>
 
       <el-table :data="tableData" border stripe v-loading="loading">
-        <el-table-column prop="name" label="班级名称" width="175" />
-        <el-table-column prop="room" label="教室" width="135" />
-        <el-table-column prop="masterName" label="班主任" width="115" />
-        <el-table-column prop="subject" label="学科" width="95">
+        <el-table-column prop="name" label="班级名称" min-width="120" />
+        <el-table-column prop="room" label="教室" min-width="100" />
+        <el-table-column prop="masterName" label="班主任" min-width="80" />
+        <el-table-column prop="subject" label="学科" width="80">
           <template #default="{ row }">{{ subjectMap[row.subject] }}</template>
         </el-table-column>
-        <el-table-column prop="beginDate" label="开课时间" width="135" />
-        <el-table-column prop="endDate" label="结课时间" width="135" />
-        <el-table-column prop="status" label="状态" width="105">
+        <el-table-column prop="beginDate" label="开课时间" min-width="110" />
+        <el-table-column prop="endDate" label="结课时间" min-width="110" />
+        <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="statusTagType[row.status]">{{ statusMap[row.status] }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="200" />
+        <el-table-column prop="createTime" label="创建时间" min-width="160" />
         <el-table-column label="操作" width="155" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" text size="small" @click="handleEdit(row)">编辑</el-button>
@@ -103,7 +103,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getClazzPage, addClazz, updateClazz, deleteClazz, getClazzById } from '../../api/clazz'
-import { getEmpList } from '../../api/emp'
+import { getTeachers } from '../../api/user'
 
 const subjectMap = { 1: 'Java', 2: '前端', 3: 'Python', 4: '大数据', 5: 'AI' }
 const statusMap = { 0: '未开课', 1: '已开课', 2: '已完结' }
@@ -201,7 +201,7 @@ const handleDelete = async (id) => {
 }
 
 onMounted(async () => {
-  const res = await getEmpList()
+  const res = await getTeachers()
   empList.value = res.data || []
   fetchData()
 })

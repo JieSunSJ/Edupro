@@ -1,6 +1,5 @@
 package cn.hytc.tlias.controller;
 
-import cn.hytc.tlias.annotation.LogOperation;
 import cn.hytc.tlias.entity.Clazz;
 import cn.hytc.tlias.vo.PageResult;
 import cn.hytc.tlias.vo.Result;
@@ -39,7 +38,6 @@ public class ClazzController {
     }
 
     /** 添加班级 */
-    @LogOperation
     @PostMapping
     public Result add(@RequestBody Clazz clazz) {
         log.info("添加班级: {}", clazz);

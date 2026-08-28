@@ -1,6 +1,5 @@
 package cn.hytc.tlias.service.impl;
 
-import cn.hytc.tlias.annotation.LogOperation;
 import cn.hytc.tlias.entity.Student;
 import cn.hytc.tlias.mapper.StudentMapper;
 import cn.hytc.tlias.service.StudentService;
@@ -39,7 +38,6 @@ public class StudentServiceImpl implements StudentService {
         studentMapper.add(student);
     }
     @Override
-    @LogOperation //自定义注解（表示：当前方法属于目标方法）
     public void deleteById(Integer id) {
         studentMapper.deleteById(id);
     }
@@ -51,5 +49,39 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Student getById(Integer id) {
         return studentMapper.getById(id);
+    }
+
+    @Override
+    public Student login(String no, String password) {
+        Student student = studentMapper.findByNo(no);
+        if (student == null) {
+            throw new RuntimeException("学号不存在");
+        }
+        if (student.getPassword() == null || !student.getPassword().equals(password)) {
+            throw new RuntimeException("密码错误");
+        }
+        return student;
+    }
+
+    @Override
+    public void updateProfile(Student student) {
+        studentMapper.updateProfile(student);
+    }
+
+    @Override
+    public void updatePassword(Integer id, String oldPassword, String newPassword) {
+        Student student = studentMapper.getById(id);
+        if (student == null) {
+            throw new RuntimeException("学生不存在");
+        }
+        if (student.getPassword() == null || !student.getPassword().equals(oldPassword)) {
+            throw new RuntimeException("原密码错误");
+        }
+        studentMapper.updatePassword(id, newPassword);
+    }
+
+    @Override
+    public void updateImage(Integer id, String imageUrl) {
+        studentMapper.updateImage(id, imageUrl);
     }
 }

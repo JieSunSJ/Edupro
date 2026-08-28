@@ -14,10 +14,6 @@
         active-text-color="#409EFF"
         router
       >
-        <el-menu-item index="/emp">
-          <el-icon><User /></el-icon>
-          <span>员工管理</span>
-        </el-menu-item>
         <el-menu-item index="/student">
           <el-icon><School /></el-icon>
           <span>学生管理</span>
@@ -138,7 +134,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { User, School, OfficeBuilding, DataAnalysis, Document, Fold, Expand, ArrowDown, Lock, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { changePassword, getEmpById, updateEmp } from '../../api/emp'
+import { changePassword, getProfile, updateProfile, updateImage } from '../../api/user'
 
 const router = useRouter()
 const route = useRoute()
@@ -161,9 +157,9 @@ const handleCommand = async (cmd) => {
     profileLoading.value = true
     profileVisible.value = true
     try {
-      const res = await getEmpById(userInfo.id)
+      const res = await getProfile()
       const data = res.data
-      profileForm.value = { ...data, salary: data.salary ? Number(data.salary) : 0 }
+      profileForm.value = { id: data.id, username: data.username, name: data.name, image: data.image, phone: data.phone, gender: data.gender }
     } catch { /* ignore */ }
     profileLoading.value = false
   } else if (cmd === 'password') {
@@ -182,11 +178,20 @@ const profileForm = ref({ id: null, username: '', name: '', image: '' })
 const uploadAction = '/api/upload'
 const uploadHeaders = { token: localStorage.getItem('token') }
 
-const handleProfileUploadSuccess = (res) => {
+const handleProfileUploadSuccess = async (res) => {
   profileUploadLoading.value = false
   if (res.code === 200) {
     profileForm.value.image = res.data
-    ElMessage.success('头像上传成功')
+    try {
+      await updateImage({ image: res.data })
+      userInfo.image = res.data
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      userImage.value = res.data
+      window.dispatchEvent(new CustomEvent('avatarUpdate', { detail: { image: res.data } }))
+      ElMessage.success('头像上传成功')
+    } catch {
+      ElMessage.error('头像保存失败')
+    }
   } else {
     ElMessage.error(res.msg || '上传失败')
   }
@@ -210,7 +215,7 @@ const handleSaveProfile = async () => {
   if (!profileForm.value.name) { ElMessage.warning('请输入姓名'); return }
   profileSaveLoading.value = true
   try {
-    await updateEmp(profileForm.value)
+    await updateProfile(profileForm.value)
     ElMessage.success('个人信息修改成功')
     profileVisible.value = false
     userInfo.name = profileForm.value.name

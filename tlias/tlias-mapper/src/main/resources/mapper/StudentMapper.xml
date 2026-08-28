@@ -4,18 +4,19 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.hytc.tlias.mapper.StudentMapper">
     <select id="list" resultType="cn.hytc.tlias.entity.Student">
-        SELECT * FROM student
+        SELECT s.*, c.name AS clazz_name, u.name AS clazz_master
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        LEFT JOIN user u ON c.master_id = u.id
         <where>
             <if test="name != null and name != ''">
-                and name like CONCAT('%', #{name}, '%')
-            </if>
-            <if test="degree != null and degree != ''">
-                and degree = #{degree}
+                and s.name like CONCAT('%', #{name}, '%')
             </if>
             <if test="clazzId != null">
-                and clazz_id = #{clazzId}
+                and s.clazz_id = #{clazzId}
             </if>
         </where>
+        ORDER BY s.id ASC
     </select>
     <insert id="add" parameterType="cn.hytc.tlias.entity.Student">
         insert into student
@@ -23,13 +24,7 @@
                 <if test="name != null and name != ''">name, </if>
                 <if test="no != null and no != ''">no, </if>
                 <if test="gender != null">gender, </if>
-                <if test="phone != null and phone != ''">phone, </if>
-                <if test="idCard != null and idCard != ''">id_card, </if>
-                <if test="isCollege != null">is_college, </if>
-                <if test="address != null and address != ''">address, </if>
-                <if test="degree != null">degree, </if>
-                <if test="graduationDate != null">graduation_date, </if>
-                <if test="clazzId != null">clazz_id, </if>
+                <if test="phone != null and phone != ''">phone, </if>                <if test="address != null and address != ''">address, </if>                <if test="clazzId != null">clazz_id, </if>
                 <if test="violationCount != null">violation_count, </if>
                 <if test="violationScore != null">violation_score, </if>
                 <if test="createTime != null">create_time, </if>
@@ -40,13 +35,7 @@
                     <if test="name != null and name != ''">#{name}, </if>
                     <if test="no != null and no != ''">#{no}, </if>
                     <if test="gender != null">#{gender}, </if>
-                    <if test="phone != null and phone != ''">#{phone}, </if>
-                    <if test="idCard != null and idCard != ''">#{idCard}, </if>
-                    <if test="isCollege != null">#{isCollege}, </if>
-                    <if test="address != null and address != ''">#{address}, </if>
-                    <if test="degree != null">#{degree}, </if>
-                    <if test="graduationDate != null">#{graduationDate}, </if>
-                    <if test="clazzId != null">#{clazzId}, </if>
+                    <if test="phone != null and phone != ''">#{phone}, </if>                    <if test="address != null and address != ''">#{address}, </if>                    <if test="clazzId != null">#{clazzId}, </if>
                     <if test="violationCount != null">#{violationCount}, </if>
                     <if test="violationScore != null">#{violationScore}, </if>
                     <if test="createTime != null">#{createTime}, </if>
@@ -59,13 +48,7 @@
                 <if test="name != null and name != ''">name = #{name}, </if>
                 <if test="no != null and no != ''">no = #{no}, </if>
                 <if test="gender != null">gender = #{gender}, </if>
-                <if test="phone != null and phone != ''">phone = #{phone}, </if>
-                <if test="idCard != null and idCard != ''">id_card = #{idCard}, </if>
-                <if test="isCollege != null">is_college = #{isCollege}, </if>
-                <if test="address != null and address != ''">address = #{address}, </if>
-                <if test="degree != null">degree = #{degree}, </if>
-                <if test="graduationDate != null">graduation_date = #{graduationDate}, </if>
-                <if test="clazzId != null">clazz_id = #{clazzId}, </if>
+                <if test="phone != null and phone != ''">phone = #{phone}, </if>                <if test="address != null and address != ''">address = #{address}, </if>                <if test="clazzId != null">clazz_id = #{clazzId}, </if>
                 <if test="violationCount != null">violation_count = #{violationCount}, </if>
                 <if test="violationScore != null">violation_score = #{violationScore}, </if>
             </trim>
@@ -77,10 +60,35 @@
     <select id="countStudentGenderData" resultType="java.util.Map">
         select IF(gender = 1, '男', '女') as name, count(*) as value from student group by gender
     </select>
-    <select id="countStudentCollegeData" resultType="java.util.Map">
-        select IF(is_college = 1, '本科', '高中') as name, count(*) as value from student group by is_college
-    </select>
     <select id="countStudentCountData" resultType="java.util.Map">
         select clazz_id as name, count(*) as value from student group by clazz_id
     </select>
+
+    <select id="findByNo" resultType="cn.hytc.tlias.entity.Student">
+        SELECT s.*, c.name AS clazz_name, c.room AS clazz_room, c.master_id AS clazz_master_id,
+               u.name AS clazz_master, c.subject AS clazz_subject,
+               c.begin_date AS clazz_begin, c.end_date AS clazz_end
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        LEFT JOIN user u ON c.master_id = u.id
+        WHERE s.no = #{no}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE student SET password = #{password} WHERE id = #{id}
+    </update>
+
+    <update id="updateProfile" parameterType="cn.hytc.tlias.entity.Student">
+        UPDATE student
+        SET phone = #{phone}, address = #{address}, image = #{image}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateImage">
+        UPDATE student SET image = #{image} WHERE id = #{id}
+    </update>
+
+    <update id="updateUnenrollCount">
+        UPDATE student SET unenroll_count = #{count} WHERE id = #{id}
+    </update>
 </mapper>

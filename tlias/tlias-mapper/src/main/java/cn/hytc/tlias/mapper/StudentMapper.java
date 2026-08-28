@@ -17,6 +17,11 @@ public interface StudentMapper {
     int add(Student student);
     int updateById(Student student);
     Student getById(@Param("id") Integer id);
+    Student findByNo(@Param("no") String no);
+    int updatePassword(@Param("id") Integer id, @Param("password") String password);
+    int updateProfile(Student student);
+    int updateImage(@Param("id") Integer id, @Param("image") String image);
+    int updateUnenrollCount(@Param("id") Integer id, @Param("count") Integer count);
     List<Map> countStudentGenderData();
     List<Map> countStudentCollegeData();
     List<Map<String, Object>> countStudentCountData();

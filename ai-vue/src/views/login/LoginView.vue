@@ -1,18 +1,19 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="login-title">Tlias 教学管理系统</h2>
+      <h2 class="login-title">Tlias 教务管理系统</h2>
       <el-form ref="formRef" :model="form" :rules="rules" size="large">
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" :prefix-icon="User" />
+          <el-input v-model="form.username" placeholder="请输入用户名 / 学号" :prefix-icon="User" />
         </el-form-item>
         <el-form-item prop="password">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" :prefix-icon="Lock" show-password />
         </el-form-item>
         <el-form-item prop="role">
           <el-select v-model="form.role" placeholder="请选择角色" style="width:100%">
-            <el-option label="管理员" :value="1" />
-            <el-option label="普通用户" :value="2" />
+            <el-option label="学生" value="student" />
+            <el-option label="管理员" value="admin" />
+            <el-option label="教师" value="teacher" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -28,7 +29,8 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
-import { login } from '../../api/emp'
+import { login as adminLogin } from '../../api/user'
+import { login as studentLogin } from '../../api/student'
 
 const router = useRouter()
 const formRef = ref(null)
@@ -37,11 +39,11 @@ const loading = ref(false)
 const form = reactive({
   username: '',
   password: '',
-  role: 1
+  role: 'student'
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名/学号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   role: [{ required: true, message: '请选择角色', trigger: 'change' }]
 }
@@ -51,11 +53,22 @@ const handleLogin = async () => {
   if (!valid) return
   loading.value = true
   try {
-    const res = await login(form)
+    let res
+    if (form.role === 'student') {
+      res = await studentLogin({ no: form.username, password: form.password })
+    } else {
+      res = await adminLogin({ username: form.username, password: form.password })
+    }
     localStorage.setItem('token', res.data.token)
-    localStorage.setItem('userInfo', JSON.stringify(res.data))
+    if (form.role === 'student') {
+      localStorage.removeItem('userInfo')
+      localStorage.setItem('studentInfo', JSON.stringify(res.data))
+    } else {
+      localStorage.removeItem('studentInfo')
+      localStorage.setItem('userInfo', JSON.stringify(res.data))
+    }
     ElMessage.success('登录成功')
-    router.push('/')
+    await router.replace(form.role === 'student' ? '/stu/dashboard' : '/student')
   } catch {
     // 错误已在拦截器中处理
   } finally {
