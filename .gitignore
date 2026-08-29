@@ -17,3 +17,6 @@ Thumbs.db
 # Test
 test_oss_connection.java
 test_upload.png
+# Build artifacts
+*.jar
+

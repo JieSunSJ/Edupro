@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hytc.edupro.mapper.ScheduleMapper">
+    <select id="findByStudentId" resultType="cn.hytc.edupro.entity.Schedule">
+        SELECT s.*, c.name AS course_name, c.teacher_name, c.room
+        FROM schedule s
+        JOIN course c ON s.course_id = c.id
+        JOIN student_course sc ON sc.course_id = c.id AND sc.student_id = #{studentId}
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND c.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY s.day_of_week, s.start_time
+    </select>
+</mapper>

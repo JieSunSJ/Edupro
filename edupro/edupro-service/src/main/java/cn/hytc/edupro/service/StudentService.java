@@ -1,0 +1,24 @@
+package cn.hytc.edupro.service;
+
+import cn.hytc.edupro.entity.Student;
+import cn.hytc.edupro.vo.PageResult;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+ * 学生服务接口
+ */
+public interface StudentService {
+    PageResult<Student> page(String name, String degree, Integer clazzId, Integer page, Integer pageSize);
+    List<Student> list(String name, String degree, Integer clazzId);
+    void addStudent(Student student);
+    void deleteById(Integer id);
+    void updateStudent(Student student);
+    Student getById(Integer id);
+
+    Student login(String no, String password);
+    void updateProfile(Student student);
+    void updatePassword(Integer id, String oldPassword, String newPassword);
+    void updateImage(Integer id, String imageUrl);
+}

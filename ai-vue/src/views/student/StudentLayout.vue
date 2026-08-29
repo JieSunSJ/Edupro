@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '200px'" class="layout-aside">
       <div class="logo">
-        <span v-show="!isCollapse">Tlias 学生端</span>
+        <span v-show="!isCollapse">EduPro 学生端</span>
         <span v-show="isCollapse">T</span>
       </div>
       <el-menu

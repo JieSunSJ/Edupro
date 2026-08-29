@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="login-title">Tlias 教务管理系统</h2>
+      <h2 class="login-title">EduPro 教务管理系统</h2>
       <el-form ref="formRef" :model="form" :rules="rules" size="large">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名 / 学号" :prefix-icon="User" />
